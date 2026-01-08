@@ -134,9 +134,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         if CONF_TIMEOUT not in updated_config:
             updated_config[CONF_TIMEOUT] = DEFAULT_TIMEOUT
 
-    if updated_config != config_entry.data:
-        hass.config_entries.async_update_entry(config_entry, data=updated_config)
+        if updated_config != config_entry.data:
+            hass.config_entries.async_update_entry(config_entry, data=updated_config)
 
-        _LOGGER.debug("Migration to version %s complete", CONFIG_VERSION)
+            _LOGGER.debug("Migration to version %s complete", CONFIG_VERSION)
 
     return True
