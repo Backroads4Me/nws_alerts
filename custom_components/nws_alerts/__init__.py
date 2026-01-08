@@ -1,5 +1,6 @@
 """NWS Alerts."""
 
+import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,6 +11,7 @@ from .const import (
     CONF_GPS_LOC,
     CONF_INTERVAL,
     CONF_TIMEOUT,
+    CONF_TRACKER,
     CONFIG_VERSION,
     COORDINATOR,
     DEFAULT_INTERVAL,
@@ -57,6 +59,28 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
         hass,
         config_entry,
     )
+
+    # Wait for device tracker to become available on startup
+    if CONF_TRACKER in config_entry.data:
+        tracker_id = config_entry.data[CONF_TRACKER]
+        max_wait = 30  # Maximum wait time in seconds
+        wait_interval = 2  # Check every 2 seconds
+        waited = 0
+
+        while waited < max_wait:
+            if hass.states.get(tracker_id) is not None:
+                _LOGGER.debug("Tracker %s is available after %s seconds", tracker_id, waited)
+                break
+            _LOGGER.debug("Waiting for tracker %s to become available...", tracker_id)
+            await asyncio.sleep(wait_interval)
+            waited += wait_interval
+
+        if waited >= max_wait:
+            _LOGGER.warning(
+                "Tracker %s not available after %s seconds, proceeding anyway",
+                tracker_id,
+                max_wait
+            )
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator.async_refresh()
